@@ -1,83 +1,83 @@
 using Microsoft.AspNetCore.Mvc;
-using GestorCursosApi.Data;
+using Microsoft.EntityFrameworkCore;
 using GestorCursosApi.Models;
+using GestorCursosApi.Data; 
 
-namespace GestorCursosApi.Controllers;
+[Route("api/[controller]")]
+[ApiController]
+public class CursosController : ControllerBase
+{
+    private readonly ApplicationDbContext _context;
 
-    [ApiController]
-    [Route("api/[controller]")]
-    public class CursosController : ControllerBase
+    // 👉 1. Inyección del DbContext en el constructor
+    public CursosController(ApplicationDbContext context)
     {
-        private readonly CursoRepository _repository;
+        _context = context;
+    }
 
-        public CursosController(CursoRepository repository)
+    // 👉 2. Método solicitado en el examen
+    [HttpGet()]
+    public async Task<ActionResult<IEnumerable<Curso>>> GetCursos()
         {
-            _repository = repository;
+            var cursos = await _context.Cursos
+                .Include(c => c.NivelAcademico)
+                .ToListAsync();
+
+            return Ok(cursos);
         }
 
-        // GET: api/cursos?nivelId=1
-        [HttpGet]
-        public ActionResult<List<Curso>> ObtenerCursos([FromQuery] int? nivelId)
+        //Listar cursos por nivel académico
+        [HttpGet("por-nivel/{nivelId}")]
+        public async Task<ActionResult<IEnumerable<Curso>>> GetCursosPorNivel(int nivelId)
         {
-            if (nivelId.HasValue)
-            {
-                return Ok(_repository.FiltrarPorNivelAcademicoId(nivelId.Value));
-            }
+            var cursos = await _context.Cursos
+                .Where(c => c.NivelAcademicoId == nivelId)
+                .Include(c => c.NivelAcademico)
+                .ToListAsync();
 
-            return Ok(_repository.ObtenerCursos());
+            if (cursos.Count == 0)
+                return NotFound("No hay cursos para ese nivel académico.");
+
+            return Ok(cursos);
         }
 
-        // GET api/cursos/5
-        [HttpGet("{id}")]
-        public ActionResult<Curso> ObtenerPorId(int id)
+        //Crear un nuevo curso
+
+         [HttpPost]
+        public async Task<ActionResult> CrearCurso(Curso curso)
         {
-            var curso = _repository.ObtenerPorId(id);
+            _context.Cursos.Add(curso);
+            await _context.SaveChangesAsync();
 
-            return curso == null
-                ? NotFound(new { message = $"Curso {id} no encontrado" })
-                : Ok(curso);
+            return CreatedAtAction(nameof(GetCursos), new { id = curso.CursoId }, curso);
         }
-
-        // POST
-        [HttpPost]
-        public ActionResult<Curso> Crear([FromBody] Curso curso)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var creado = _repository.Crear(curso);
-
-            return CreatedAtAction(
-                nameof(ObtenerPorId),
-                new { id = creado.CursoId },
-                creado
-            );
-        }
-
-        // PUT api/cursos/5
+        
+        //Actualizar un curso existente
         [HttpPut("{id}")]
-        public ActionResult Actualizar(int id, [FromBody] Curso curso)
+        public async Task<ActionResult> ActualizarCurso(int id, Curso curso)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (id != curso.CursoId)
+                return BadRequest("El ID del curso no coincide.");
 
-            var actualizado = _repository.Actualizar(id, curso);
+            _context.Entry(curso).State = EntityState.Modified;
 
-            if (!actualizado)
-                return NotFound(new { message = $"Curso con ID {id} no encontrado" });
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.Cursos.Any(e => e.CursoId == id))
+                    return NotFound("Curso no encontrado.");
 
-            return NoContent();
-        }
-
-        // DELETE api/cursos/5
-        [HttpDelete("{id}")]
-        public ActionResult Eliminar(int id)
-        {
-            var eliminado = _repository.Eliminar(id);
-
-            if (!eliminado)
-                return NotFound(new { message = $"Curso con ID {id} no encontrado" });
+                throw;
+            }
 
             return NoContent();
         }
     }
+
+
+
+
+}
