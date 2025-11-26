@@ -15,3 +15,4 @@ public int NivelAcademicoId { get; set; }
     public ICollection<Curso>? Cursos { get; set; }
 }
    
+   
