@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using GestorCursosApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,24 +15,25 @@ builder.Services.AddCors(options =>
         .AllowAnyMethod()
         .AllowAnyHeader();
     });
-}
+} 
 );
 
-// LEER VARIABELES DE ENTORNO
+var server = Environment.GetEnvironmentVariable("MYSQL_SERVER") ?? "localhost";
+var port = Environment.GetEnvironmentVariable("MYSQL_PORT") ?? "3306";
+var database = Environment.GetEnvironmentVariable("MYSQL_DATABASE") ?? "db_gestorcursos";
+var user = Environment.GetEnvironmentVariable("MYSQL_USER") ?? "root";
+var password = Environment.GetEnvironmentVariable("MYSQL_PASSWORD") ?? "mysql";
 
-var server = Environment.GetEnvironmentVariable("MYSQL_SERVER");
-var port = Environment.GetEnvironmentVariable("MYSQL_PORT");
-var database =  Environment.GetEnvironmentVariable("MYSQL_DATABASE");
-var user =  Environment.GetEnvironmentVariable("MYSQL_USER");
-var password = Environment.GetEnvironmentVariable("MYSQL_PASSWORD");
+var connectionString = $"Server={server};Port={port};Database={database};Uid={user};Pwd={password};SslMode=none;AllowPublicKeyRetrieval=True;";
 
-var connectionString = $"Server={server};Port={port};Database={database};User={user};Password={password}";
-
-// Add services to the container.
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
+        new MySqlServerVersion(new Version(9, 1, 0))));
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
 builder.Services.AddEndpointsApiExplorer();
+
 
 builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo

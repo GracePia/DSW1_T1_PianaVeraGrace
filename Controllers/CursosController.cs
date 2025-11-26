@@ -3,21 +3,23 @@ using Microsoft.EntityFrameworkCore;
 using GestorCursosApi.Models;
 using GestorCursosApi.Data; 
 
+namespace GestorCursosApi.Controllers
+{
 [Route("api/[controller]")]
 [ApiController]
 public class CursosController : ControllerBase
 {
-    private readonly ApplicationDbContext _context;
+    private readonly AppDbContext _context;
 
     // 👉 1. Inyección del DbContext en el constructor
-    public CursosController(ApplicationDbContext context)
+    public CursosController(AppDbContext context)
     {
         _context = context;
     }
 
     // 👉 2. Método solicitado en el examen
     [HttpGet()]
-    public async Task<ActionResult<IEnumerable<Curso>>> GetCursos()
+    public async Task<ActionResult<IEnumerable<Curso>>> ObetenerCursos()
         {
             var cursos = await _context.Cursos
                 .Include(c => c.NivelAcademico)
@@ -27,39 +29,91 @@ public class CursosController : ControllerBase
         }
 
         //Listar cursos por nivel académico
-        [HttpGet("por-nivel/{nivelId}")]
-        public async Task<ActionResult<IEnumerable<Curso>>> GetCursosPorNivel(int nivelId)
+         [HttpGet("nivel/{nivelAcademicoId}")]
+        public async Task<ActionResult<IEnumerable<Curso>>> ListarCursosPorNivel(int nivelAcademicoId)
         {
             var cursos = await _context.Cursos
-                .Where(c => c.NivelAcademicoId == nivelId)
                 .Include(c => c.NivelAcademico)
+                .Where(c => c.NivelAcademicoId == nivelAcademicoId)
                 .ToListAsync();
 
-            if (cursos.Count == 0)
-                return NotFound("No hay cursos para ese nivel académico.");
+            if (!cursos.Any())
+            {
+                return NotFound($"No se encontraron cursos para el nivel académico {nivelAcademicoId}");
+            }
 
             return Ok(cursos);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Curso>> GetCurso(int id)
+        {
+            var curso = await _context.Cursos
+                .Include(c => c.NivelAcademico)
+                .FirstOrDefaultAsync(c => c.CursoId == id);
+
+            if (curso == null)
+            {
+                return NotFound($"Curso con ID {id} no encontrado");
+            }
+
+            return Ok(curso);
         }
 
         //Crear un nuevo curso
 
          [HttpPost]
-        public async Task<ActionResult> CrearCurso(Curso curso)
+        public async Task<ActionResult<Curso>> CrearCurso(Curso curso)
         {
+            // Validar que el nivel académico existe
+            var nivelExiste = await _context.NivelesAcademicos
+                .AnyAsync(n => n.NivelAcademicoId == curso.NivelAcademicoId);
+
+            if (!nivelExiste)
+            {
+                return BadRequest("El nivel académico especificado no existe");
+            }
+
             _context.Cursos.Add(curso);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetCursos), new { id = curso.CursoId }, curso);
+            return CreatedAtAction(
+                nameof(GetCurso), 
+                new { id = curso.CursoId }, 
+                curso);
         }
-        
+
         //Actualizar un curso existente
         [HttpPut("{id}")]
-        public async Task<ActionResult> ActualizarCurso(int id, Curso curso)
+        public async Task<IActionResult> ActualizarCurso(int id, Curso curso)
         {
             if (id != curso.CursoId)
-                return BadRequest("El ID del curso no coincide.");
+            {
+                return BadRequest("El ID del curso no coincide");
+            }
 
-            _context.Entry(curso).State = EntityState.Modified;
+            // Verificar que el curso existe
+            var cursoExistente = await _context.Cursos.FindAsync(id);
+            if (cursoExistente == null)
+            {
+                return NotFound($"Curso con ID {id} no encontrado");
+            }
+
+            // Validar que el nivel académico existe
+            var nivelExiste = await _context.NivelesAcademicos
+                .AnyAsync(n => n.NivelAcademicoId == curso.NivelAcademicoId);
+
+            if (!nivelExiste)
+            {
+                return BadRequest("El nivel académico especificado no existe");
+            }
+
+            // Actualizar propiedades
+            cursoExistente.CodigoCurso = curso.CodigoCurso;
+            cursoExistente.NombreCurso = curso.NombreCurso;
+            cursoExistente.Creditos = curso.Creditos;
+            cursoExistente.HorasSemanales = curso.HorasSemanales;
+            cursoExistente.NivelAcademicoId = curso.NivelAcademicoId;
 
             try
             {
@@ -67,17 +121,30 @@ public class CursosController : ControllerBase
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_context.Cursos.Any(e => e.CursoId == id))
-                    return NotFound("Curso no encontrado.");
-
-                throw;
+                return StatusCode(500, "Error al actualizar el curso");
             }
+
+            return NoContent();
+        }
+
+         [HttpDelete("{id}")]
+        public async Task<IActionResult> EliminarCurso(int id)
+        {
+            var curso = await _context.Cursos.FindAsync(id);
+            
+            if (curso == null)
+            {
+                return NotFound($"Curso con ID {id} no encontrado");
+            }
+
+            _context.Cursos.Remove(curso);
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
     }
 
-
-
-
 }
+
+
+
