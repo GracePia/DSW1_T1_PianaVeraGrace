@@ -1,5 +1,6 @@
 using GestorCursosApi.Models;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace GestorNivelAcademicoApi.Models;
 
@@ -10,7 +11,7 @@ public int NivelAcademicoId { get; set; }
     public int Orden { get; set; }
     
     // Propiedad de navegación - Relación uno a muchos
-    public ICollection<Curso> Cursos { get; set; } = new List<Curso>();
-    // Navegación
-   
+     [JsonIgnore] 
+    public ICollection<Curso>? Cursos { get; set; }
 }
+   

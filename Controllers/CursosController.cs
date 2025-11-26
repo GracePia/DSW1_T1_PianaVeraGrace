@@ -63,25 +63,18 @@ public class CursosController : ControllerBase
         //Crear un nuevo curso
 
          [HttpPost]
-        public async Task<ActionResult<Curso>> CrearCurso(Curso curso)
-        {
-            // Validar que el nivel académico existe
-            var nivelExiste = await _context.NivelesAcademicos
-                .AnyAsync(n => n.NivelAcademicoId == curso.NivelAcademicoId);
-
-            if (!nivelExiste)
+         public async Task<ActionResult<Curso>> CrearCurso(Curso curso)
+         {
+            if (!ModelState.IsValid)
             {
-                return BadRequest("El nivel académico especificado no existe");
+               return BadRequest(ModelState);
             }
 
-            _context.Cursos.Add(curso);
-            await _context.SaveChangesAsync();
+             _context.Cursos.Add(curso);
+             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(
-                nameof(GetCurso), 
-                new { id = curso.CursoId }, 
-                curso);
-        }
+            return CreatedAtAction(nameof(GetCurso), new { id = curso.CursoId }, curso);
+          }
 
         //Actualizar un curso existente
         [HttpPut("{id}")]

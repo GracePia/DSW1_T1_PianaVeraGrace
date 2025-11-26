@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using GestorCursosApi.Data;
+using DotNetEnv;
+
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,19 +21,25 @@ builder.Services.AddCors(options =>
 } 
 );
 
-var server = Environment.GetEnvironmentVariable("MYSQL_SERVER") ?? "localhost";
-var port = Environment.GetEnvironmentVariable("MYSQL_PORT") ?? "3306";
-var database = Environment.GetEnvironmentVariable("MYSQL_DATABASE") ?? "db_gestorcursos";
-var user = Environment.GetEnvironmentVariable("MYSQL_USER") ?? "root";
-var password = Environment.GetEnvironmentVariable("MYSQL_PASSWORD") ?? "mysql";
+var server = Environment.GetEnvironmentVariable("MYSQL_SERVER") ;
+var port = Environment.GetEnvironmentVariable("MYSQL_PORT") ;
+var database = Environment.GetEnvironmentVariable("MYSQL_DATABASE") ;
+var user = Environment.GetEnvironmentVariable("MYSQL_USER") ;
+var password = Environment.GetEnvironmentVariable("MYSQL_PASSWORD") ;
 
 var connectionString = $"Server={server};Port={port};Database={database};Uid={user};Pwd={password};SslMode=none;AllowPublicKeyRetrieval=True;";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
-        new MySqlServerVersion(new Version(9, 1, 0))));
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
+    )
+);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(x =>
+        x.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve
+    );
 
 builder.Services.AddEndpointsApiExplorer();
 
