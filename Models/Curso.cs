@@ -7,11 +7,15 @@ public class Curso
 {
     public int CursoId { get; set; }
      [Required(ErrorMessage = "El Codigo es obligatorio")]
-    
-    public string CodigoCurso { get; set; } = string.Empty;
+     [StringLength(7, ErrorMessage = "El codigo no debe superar los 7 cartacteres")]
+        public string CodigoCurso { get; set; } = string.Empty;
+     [Required(ErrorMessage = "El Campo es obligatorio")]
     public string NombreCurso { get; set; } = string.Empty;
+     [Required(ErrorMessage = "El Campo es obligatorio")]
     public int Creditos { get; set; }
+    [Required(ErrorMessage = "El Campo es obligatorio")]
     public int HorasSemanales { get; set; }
+     [Required(ErrorMessage = "El Campo es obligatorio")]
     public int NivelAcademicoId { get; set; }
     
     // Navegación
