@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSW1_T1_PianaVeraGrace", "DSW1_T1_PianaVeraGrace.csproj", "{68F13670-8961-C26E-4028-4B2097821951}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{68F13670-8961-C26E-4028-4B2097821951}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68F13670-8961-C26E-4028-4B2097821951}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68F13670-8961-C26E-4028-4B2097821951}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68F13670-8961-C26E-4028-4B2097821951}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DD874025-14B9-4A6B-AE62-DE70F0E32708}
+	EndGlobalSection
+EndGlobal
