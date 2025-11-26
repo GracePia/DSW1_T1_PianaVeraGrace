@@ -1,4 +1,5 @@
 using GestorCursosApi.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace GestorNivelAcademicoApi.Models;
 
